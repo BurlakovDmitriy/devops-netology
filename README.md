@@ -41,6 +41,51 @@
 ```$ git grep -e func --and -e providerSource
 command/init_test.go:func TestInit_providerSource(t *testing.T) {
 ```
+или вот пытался найти комит в котором была создана функция через `blame`, но такой директории и файла нет....
+```$ git grep -n providerSource
+command/init_test.go:950:func TestInit_providerSource(t *testing.T) {
+plugin/discovery/get.go:156:    providerSource := allVersions.ID
+plugin/discovery/get.go:207:    downloadURLs, err := i.listProviderDownloadURLs(providerSource, versionMeta.Version)
+plugin/discovery/get.go:235:    printedProviderName := fmt.Sprintf("%q (%s)", provider.LegacyString(), providerSource)
+Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform (main)
+$ git blame -L 156,235 get.go
+fatal: no such path 'get.go' in HEAD
+
+Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform (main)
+$ cd plugin/discovery
+bash: cd: plugin/discovery: No such file or directory
+
+Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform (main)
+$ ls -l
+total 260
+-rw-r--r-- 1 Solid 197121  15020 Aug  8 00:51 BUGPROCESS.md
+-rw-r--r-- 1 Solid 197121   1669 Aug  8 00:51 CHANGELOG.md
+-rw-r--r-- 1 Solid 197121   1631 Aug  8 00:51 CODEOWNERS
+-rw-r--r-- 1 Solid 197121    828 Aug  8 00:51 Dockerfile
+-rw-r--r-- 1 Solid 197121  16331 Aug  7 19:04 LICENSE
+-rw-r--r-- 1 Solid 197121   1898 Aug  8 00:51 Makefile
+-rw-r--r-- 1 Solid 197121   3771 Aug  8 00:51 README.md
+-rw-r--r-- 1 Solid 197121   2140 Aug  8 00:51 checkpoint.go
+-rw-r--r-- 1 Solid 197121    620 Aug  8 00:51 codecov.yml
+-rw-r--r-- 1 Solid 197121  10908 Aug  8 00:51 commands.go
+drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 docs/
+-rw-r--r-- 1 Solid 197121   6005 Aug  8 00:51 go.mod
+-rw-r--r-- 1 Solid 197121 109310 Aug  8 00:51 go.sum
+-rw-r--r-- 1 Solid 197121   2654 Aug  8 00:51 help.go
+drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 internal/
+-rw-r--r-- 1 Solid 197121  18537 Aug  8 00:51 main.go
+-rw-r--r-- 1 Solid 197121   6742 Aug  8 00:51 main_test.go
+-rw-r--r-- 1 Solid 197121    985 Aug  8 00:51 plugins.go
+-rw-r--r-- 1 Solid 197121  10034 Aug  8 00:51 provider_source.go
+drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 scripts/
+-rw-r--r-- 1 Solid 197121    170 Aug  7 19:04 signal_unix.go
+-rw-r--r-- 1 Solid 197121    138 Aug  7 19:04 signal_windows.go
+drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 tools/
+drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 version/
+-rw-r--r-- 1 Solid 197121    151 Aug  8 00:51 version.go
+drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 website/
+```
+
 
 
 1. Найдите все коммиты в которых была изменена функция `globalPluginDirs`.
