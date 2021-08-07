@@ -1,140 +1,60 @@
-# Домашнее задание к занятию «2.3. Ветвления в Git»
-Данное задание получилось первым, что я переделывал дважды.
-Так на первый раз совершив несколько ошибок попытался откатить версию путем 
-`reset head~`  и попытался заново всё сделать. Приходилось и удалять ветки локально и из репозитория, освоить базовые вещи в VIM, удалять коммиты, неоднократно пролистывать историю изменений. В итоге подобрать alias для работы с историей, после все отойти на коммит прошлого домашнего задания и все снести. 
-Ну, а после снова просмотреть материал по теме и в итоге заново всё сделать.
+# Домашнее задание к занятию «2.4. Инструменты Git»
 
-В итоге мне немного не понятно история изменений которую я вижу что в `GitHub` что `PyCharm`, но надеюсь всё сделано верно
-Ниже представлен кусок кода начиная с rebase ветки git-rebase
-```Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (main)
-$ git status
-On branch main
-Your branch is up to date with 'origin/main'.
 
-nothing to commit, working tree clean
+1. Найдите полный хеш и комментарий коммита, хеш которого начинается на `aefea`.
+`aefead2207ef7e2aa5dc81a34aedf0cad4c32545`
 
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (main)
-$ git switch git-rebase
-Switched to branch 'git-rebase'
-Your branch is up to date with 'origin/git-rebase'.
+3. Какому тегу соответствует коммит `85024d3`?
+Коммит `85024d3100126de36331c6982bfaac02cdab9e76`
+Таг `"tag: v0.12.23"`
 
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase)
-$ git rebase -i main
-hint: Waiting for your editor to close the file... unix2dos: converting file C:/Users/Solid/github/devops-netology/.git/rebase-merge/git-rebase-todo to DOS format...
-dos2unix: converting file C:/Users/Solid/github/devops-netology/.git/rebase-merge/git-rebase-todo to Unix format...
-error: could not apply deebfa9... git-rebase 1
-Resolve all conflicts manually, mark them as resolved with
-"git add/rm <conflicted_files>", then run "git rebase --continue".
-You can instead skip this commit: run "git rebase --skip".
-To abort and get back to the state before "git rebase", run "git rebase --abort".
-Could not apply deebfa9... git-rebase 1
-Auto-merging branching/rebase.sh
-CONFLICT (content): Merge conflict in branching/rebase.sh
+5. Сколько родителей у коммита `b8d720`? Напишите их хеши.
+`b8d720` Является мерж комитом и по идее у него два родителя 
+Комнадой `git show HEAD^` находясь на этом комите получаем первого 
+56cd7859e05c36c06b56d013b55a252d0bb7e158
+Но вот командой `git show HEAD~2` я получею уже не второго родителя а родителя родителя.
+судя по графу второй родитель комита `b8d720` является комит из смерженой ветки `9ea88f22fc6269854151c571162c5bcf958bee2b`
 
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase|REBASE 1/2)
-$ vim rebase.sh
+6. Перечислите хеши и комментарии всех коммитов которые были сделаны между тегами  v0.12.23 и v0.12.24.
 
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase|REBASE 1/2)
-$ git add rebase.sh
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase|REBASE 1/2)
-$ git rebase --continue
-error: could not apply a2fe923... git-rebase 2
-Resolve all conflicts manually, mark them as resolved with
-"git add/rm <conflicted_files>", then run "git rebase --continue".
-You can instead skip this commit: run "git rebase --skip".
-To abort and get back to the state before "git rebase", run "git rebase --abort".
-Could not apply a2fe923... git-rebase 2
-Auto-merging branching/rebase.sh
-CONFLICT (content): Merge conflict in branching/rebase.sh
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase|REBASE 2/2)
-$ vim rebase.sh
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase|REBASE 2/2)
-$ git add rebase.sh
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase|REBASE 2/2)
-$ git rebase --continue
-hint: Waiting for your editor to close the file... unix2dos: converting file C:/Users/Solid/github/devops-netology/.git/COMMIT_EDITMSG to DOS format...
-dos2unix: converting file C:/Users/Solid/github/devops-netology/.git/COMMIT_EDITMSG to Unix format...
-[detached HEAD ecb942e] Merge branch 'git-merge'
- Date: Thu Jul 29 23:21:31 2021 +0300
-Successfully rebased and updated refs/heads/git-rebase.
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase)
-$ git push -u origin git-rebase
-To https://github.com/BurlakovDmitriy/devops-netology.git
- ! [rejected]        git-rebase -> git-rebase (non-fast-forward)
-error: failed to push some refs to 'https://github.com/BurlakovDmitriy/devops-netology.git'
-hint: Updates were rejected because the tip of your current branch is behind
-hint: its remote counterpart. Integrate the remote changes (e.g.
-hint: 'git pull ...') before pushing again.
-hint: See the 'Note about fast-forwards' in 'git push --help' for details.
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase)
-$ git push -u origin git-rebase -f
-Enumerating objects: 10, done.
-Counting objects: 100% (10/10), done.
-Delta compression using up to 4 threads
-Compressing objects: 100% (4/4), done.
-Writing objects: 100% (4/4), 425 bytes | 425.00 KiB/s, done.
-Total 4 (delta 2), reused 0 (delta 0), pack-reused 0
-remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
-To https://github.com/BurlakovDmitriy/devops-netology.git
- + a2fe923...ecb942e git-rebase -> git-rebase (forced update)
-Branch 'git-rebase' set up to track remote branch 'git-rebase' from 'origin'.
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (git-rebase)
-$ git checkout main
-Switched to branch 'main'
-Your branch is up to date with 'origin/main'.
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (main)
-$ git merge git-rebase
-hint: Waiting for your editor to close the file... unix2dos: converting file C:/Users/Solid/github/devops-netology/.git/MERGE_MSG to DOS format...
-dos2unix: converting file C:/Users/Solid/github/devops-netology/.git/MERGE_MSG to Unix format...
-Merge made by the 'recursive' strategy.
- branching/rebase.sh | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/devops-netology/branching (main)
-
-$ git push -u origin main
-Enumerating objects: 1, done.
-Counting objects: 100% (1/1), done.
-Writing objects: 100% (1/1), 229 bytes | 229.00 KiB/s, done.
-Total 1 (delta 0), reused 0 (delta 0), pack-reused 0
-To https://github.com/BurlakovDmitriy/devops-netology.git
-   3d94d82..c57ccc9  main -> main
-Branch 'main' set up to track remote branch 'main' from 'origin'
-```
-А здесь представлен лог. 
-
-```$ git hist
-*   c57ccc9 2021-07-29 | Merge branch 'git-rebase' (HEAD -> main, origin/main, origin/HEAD) [BurlakovDmitry]
-|\
-| *   ecb942e 2021-07-29 | Merge branch 'git-merge' (origin/git-rebase, git-rebase) [BurlakovDmitry]
-| |\
-* | \   3d94d82 2021-07-29 | Merge branch 'git-merge' [BurlakovDmitry]
-|\ \ \
-| |/ /
-|/| /
-| |/
-| * b8a7707 2021-07-29 | merge: use shift (origin/git-merge, git-merge) [BurlakovDmitry]
-| * 4553792 2021-07-29 | merge: @ instead * [BurlakovDmitry]
-* | fc65f5b 2021-07-29 | change rabase [BurlakovDmitry]
-|/
-* 4a283b1 2021-07-29 | prepare for merge and rebase [BurlakovDmitry]
-* 11dbd16 2021-07-18 | Update README.md (tag: v0.1, tag: v0.0) [BurlakovDmitriy]
-* f9ff4e7 2021-07-18 | Moved and deleted [BurlakovDmitry]
-* edea029 2021-07-18 | readmi changed [BurlakovDmitry]
-* f750ad4 2021-07-18 | Prepare to delete and move [BurlakovDmitry]
-* f657301 2021-07-18 | Prepare to delete and move [BurlakovDmitry]
-* 67ef05f 2021-07-18 | Added gitignore [BurlakovDmitry]
-* 7f8bb09 2021-07-18 | First commit [BurlakovDmitry]
-* f8a2f24 2021-07-18 | Initial commit [BurlakovDmitriy]
+```* 33ff1c03b 2020-03-19 | v0.12.24 (HEAD, tag: v0.12.24) [tf-release-bot]
+* b14b74c49 2020-03-10 | [Website] vmc provider links [Chris Griggs]
+* 3f235065b 2020-03-19 | Update CHANGELOG.md [Alisdair McDiarmid]
+* 6ae64e247 2020-03-19 | registry: Fix panic when server is unreachable [Alisdair McDiarmid]
+* 5c619ca1b 2020-03-18 | website: Remove links to the getting started guide's old location [Nick Fagerlund]
+* 06275647e 2020-03-18 | Update CHANGELOG.md [Alisdair McDiarmid]
+* d5f9411f5 2020-03-17 | command: Fix bug when using terraform login on Windows [Alisdair McDiarmid]
+* 4b6d06cc5 2020-03-10 | Update CHANGELOG.md [Pam Selle]
+* dd01a3507 2020-03-05 | Update CHANGELOG.md [Kristin Laemmert]
+* 225466bc3 2020-03-05 | Cleanup after v0.12.23 release [tf-release-bot]
+* 85024d310 2020-03-05 | v0.12.23 (tag: v0.12.23) [tf-release-bot]
 ```
 
-Вопрос только один, так и должен выглядеть лог данного домашнего задания?
 
+7. Найдите коммит в котором была создана функция `func providerSource`, ее определение в коде выглядит так `func providerSource(...)` (вместо троеточего перечислены аргументы).
+
+Перепробовал множество способов поиска функций и изменений, но итог по сути один и он не находит конкретно необходимую функцию 
+
+```$ git grep -e func --and -e providerSource
+command/init_test.go:func TestInit_providerSource(t *testing.T) {
+```
+
+
+1. Найдите все коммиты в которых была изменена функция `globalPluginDirs`.
+```$ git log -S "globalPluginDirs" --oneline
+35a058fb3 main: configure credentials from the CLI config file
+c0b176109 prevent log output during init
+8364383c3 Push plugin discovery down into command package
+```
+
+1. Кто автор функции `synchronizedWriters`? 
+```$ git grep -n synchronizedWriters
+main.go:284:            wrapped := synchronizedWriters(stdout, stderr)
+synchronized_writers.go:13:// synchronizedWriters takes a set of writers and returns wrappers that ensure
+synchronized_writers.go:15:func synchronizedWriters(targets ...io.Writer) []io.Writer {
+
+Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform ((v0.12.24))
+$ git blame -L 15,17 synchronized_writers.go
+5ac311e2a9 (Martin Atkins 2017-05-03 16:25:41 -0700 15) func synchronizedWriters(targets ...io.Writer) []io.Writer {
+```
+Martin Atkins
