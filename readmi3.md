@@ -6,8 +6,8 @@
 1. Установите средство автоматизации [Hashicorp Vagrant](https://www.vagrantup.com/).
 * установил
 1. В вашем основном окружении подготовьте удобный для дальнейшей работы терминал. Можно предложить:
-	* установил Windows Terminal в Windows
-	* почитал - менять не стал.
+* установил Windows Terminal в Windows
+* почитал - менять не стал.
 
 1. С помощью базового файла конфигурации запустите Ubuntu 20.04 в VirtualBox посредством Vagrant:
 * запустил, создал ВМ, подключился по SSH 
@@ -17,18 +17,38 @@
 
 
 1. Ознакомьтесь с возможностями конфигурации VirtualBox через Vagrantfile: [документация](https://www.vagrantup.com/docs/providers/virtualbox/configuration.html). Как добавить оперативной памяти или ресурсов процессора виртуальной машине?
-Добавление ресурсов
+* Добавление ресурсов оперативной памяти и количества ЦП
 ```config.vm.provider "virtualbox" do |v|
   v.memory = 1024
   v.cpus = 2
 end```
+Ограничение загрузки ЦП до 50%
+```config.vm.provider "virtualbox" do |v|
+  v.customize ["modifyvm", "--cpuexecutioncap", "50"]
+end```
+
 
 
 1. Команда `vagrant ssh` из директории, в которой содержится Vagrantfile, позволит вам оказаться внутри виртуальной машины без каких-либо дополнительных настроек. Попрактикуйтесь в выполнении обсуждаемых команд в терминале Ubuntu.
+* подключился
 
 1. Ознакомиться с разделами `man bash`, почитать о настройках самого bash:
     * какой переменной можно задать длину журнала `history`, и на какой строчке manual это описывается?
+*   ```862        HISTSIZE
+    863               The number of commands to remember in the command history (see HISTORY below).  If the value is 0, com‐
+    864               mands  are  not saved in the history list.  Numeric values less than zero result in every command being
+    865               saved on the history list (there is no limit).  The shell sets the default value to 500  after  reading
+    866               any startup files.```
+    
     * что делает директива `ignoreboth` в bash?
+* Значение ignorebothявляется сокращением для `ignorespace` и `ignoredups` Список значений, разделенных двоеточиями, управляющий тем, как команды сохраняются в списке истории. Если список значений включает в себя ignorespace, строки, начинающиеся с пробела, не сохраняются в списке истории. Значение ignoredupsприводит к тому, что строки, соответствующие предыдущей записи истории, не будут сохранены.
+* ``` 837               of ignoreboth is shorthand for ignorespace and ignoredups.  A value of erasedups  causes  all  previous
+    838               lines  matching  the  current  line to be removed from the history list before that line is saved.  Any
+    839               value not in the above list is ignored.  If HISTCONTROL is unset, or does not include  a  valid  value,
+    840               all  lines  read by the shell parser are saved on the history list, subject to the value of HISTIGNORE.
+    841               The second and subsequent lines of a multi-line compound command are not tested, and are added  to  the
+    842               history regardless of the value of HISTCONTROL.```
+
 1. В каких сценариях использования применимы скобки `{}` и на какой строчке `man bash` это описано?
 1. С учётом ответа на предыдущий вопрос, как создать однократным вызовом `touch` 100000 файлов? Получится ли аналогичным образом создать 300000? Если нет, то почему?
 1. В man bash поищите по `/\[\[`. Что делает конструкция `[[ -d /tmp ]]`
