@@ -21,11 +21,14 @@
 ```config.vm.provider "virtualbox" do |v|
   v.memory = 1024
   v.cpus = 2
-end```
+end
+```
+
 Ограничение загрузки ЦП до 50%
 ```config.vm.provider "virtualbox" do |v|
   v.customize ["modifyvm", "--cpuexecutioncap", "50"]
-end```
+end
+```
 
 
 
@@ -38,7 +41,8 @@ end```
     863               The number of commands to remember in the command history (see HISTORY below).  If the value is 0, com‐
     864               mands  are  not saved in the history list.  Numeric values less than zero result in every command being
     865               saved on the history list (there is no limit).  The shell sets the default value to 500  after  reading
-    866               any startup files.```
+    866               any startup files.
+    ```
     
     * что делает директива `ignoreboth` в bash?
 * Значение ignorebothявляется сокращением для `ignorespace` и `ignoredups` Список значений, разделенных двоеточиями, управляющий тем, как команды сохраняются в списке истории. Если список значений включает в себя ignorespace, строки, начинающиеся с пробела, не сохраняются в списке истории. Значение ignoredupsприводит к тому, что строки, соответствующие предыдущей записи истории, не будут сохранены.
@@ -47,12 +51,26 @@ end```
     839               value not in the above list is ignored.  If HISTCONTROL is unset, or does not include  a  valid  value,
     840               all  lines  read by the shell parser are saved on the history list, subject to the value of HISTIGNORE.
     841               The second and subsequent lines of a multi-line compound command are not tested, and are added  to  the
-    842               history regardless of the value of HISTCONTROL.```
+    842               history regardless of the value of HISTCONTROL.
+    ```
 
 1. В каких сценариях использования применимы скобки `{}` и на какой строчке `man bash` это описано?
-1. С учётом ответа на предыдущий вопрос, как создать однократным вызовом `touch` 100000 файлов? Получится ли аналогичным образом создать 300000? Если нет, то почему?
-1. В man bash поищите по `/\[\[`. Что делает конструкция `[[ -d /tmp ]]`
-1. Основываясь на знаниях о просмотре текущих (например, PATH) и установке новых переменных; командах, которые мы рассматривали, добейтесь в выводе type -a bash в виртуальной машине наличия первым пунктом в списке:
+* что находится между круглыми скобками, выполняется в отдельном подпроцессе. А то, что находится между фигурными скобками — выполняется в контексте текущей оболочки.
+```    214    Compound Commands
+    215        A compound command is one of the following.  In most cases a list in a command's description may be separated from the rest of the command by one  or  more  new‐
+    216        lines, and may be followed by a newline in place of a semicolon.
+    217
+    221        { list; }
+    222               list is simply executed in the current shell environment.  list must be terminated with a newline or semicolon.  This is known as a  group  command.   The
+    223               return status is the exit status of list.  Note that unlinnnnke the metacharacters ( and ), { and } are reserved words and must occur where a reserved word is
+    224               permitted to be recognized.  Since they do not cause a word break, they must be separated from list by whitespace or another shell metacharacter.
+    ```
+    
+
+3. С учётом ответа на предыдущий вопрос, как создать однократным вызовом `touch` 100000 файлов? Получится ли аналогичным образом создать 300000? Если нет, то почему?
+* `touch new-file-{1..100000}.txt` такой командой получится создать 10к файлов. Для создания 30к файлов необходимо расширить stack size в файле limits.conf с помощью комнады `$ ulimit -s 30000`
+4. В man bash поищите по `/\[\[`. Что делает конструкция `[[ -d /tmp ]]`
+6. Основываясь на знаниях о просмотре текущих (например, PATH) и установке новых переменных; командах, которые мы рассматривали, добейтесь в выводе type -a bash в виртуальной машине наличия первым пунктом в списке:
 
 	```bash
 	bash is /tmp/new_path_directory/bash
