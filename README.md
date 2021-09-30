@@ -1,108 +1,128 @@
-# Домашнее задание к занятию «2.4. Инструменты Git»
+1.**На лекции мы познакомились с node_exporter. В демонстрации его исполняемый файл запускался в background. Этого достаточно для демо, но не для настоящей production-системы, где процессы должны находиться под внешним управлением. Используя знания из лекции по systemd, создайте самостоятельно простой unit-файл для node_exporter:
+поместите его в автозагрузку,
+предусмотрите возможность добавления опций к запускаемому процессу через внешний файл (посмотрите, например, на systemctl cat cron),
+удостоверьтесь, что с помощью systemctl процесс корректно стартует, завершается, а после перезагрузки автоматически поднимается.**
+vagrant@vagrant:$ cd /tmp
+vagrant@vagrant:/tmp$ curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.1.2/node_exporter-1.1.2.linux-amd64.tar.gz
+vagrant@vagrant:/tmp$ sudo nano /etc/systemd/system/node_exporter.service
+[Unit]
+Description=Node Exporter
+After=network.target
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+[Install]
+WantedBy=multi-user.target
+После добавления в автозагрузку и проверки статуса - вот так:
+vagrant@vagrant:$ sudo systemctl status node_exporter
+? node_exporter.service - Node Exporter
+Loaded: loaded (/etc/systemd/system/node_exporter.service; enabled; vendor preset: enabled)
+Active: failed (Result: exit-code) since Tue 2021-09-29 18:21:00 UTC; 9min ago
+Process: 658 ExecStart=/usr/local/bin/node_exporter (code=exited, status=217/USER)
+Main PID: 658 (code=exited, status=217/USER)
+vagrant systemd[1]: Started Node Exporter.
+vagrant systemd[658]: node_exporter.service: Failed to determine user credentials: No such process
+vagrant systemd[658]: node_exporter.service: Failed at step USER spawning /usr/local/bin/node_exporter:
+vagrant systemd[1]: node_exporter.service: Main process exited, code=exited, status=217/USER
+vagrant systemd[1]: node_exporter.service: Failed with result 'exit-code'.
 
+**Ознакомьтесь с опциями node_exporter и выводом /metrics по-умолчанию. Приведите несколько опций, которые вы бы выбрали для базового мониторинга хоста по CPU, памяти, диску и сети.**
 
-1. Найдите полный хеш и комментарий коммита, хеш которого начинается на `aefea`.
-
-`aefead2207ef7e2aa5dc81a34aedf0cad4c32545`
-
-3. Какому тегу соответствует коммит `85024d3`?
-
-Коммит `85024d3100126de36331c6982bfaac02cdab9e76`
-Таг `"tag: v0.12.23"`
-
-5. Сколько родителей у коммита `b8d720`? Напишите их хеши.
-
-`b8d720` Является мерж комитом и по идее у него два родителя 
-Комнадой `git show HEAD^` находясь на этом комите получаем первого 
-`56cd7859e05c36c06b56d013b55a252d0bb7e158`
-Но вот командой `git show HEAD~2` я получаю уже не второго родителя, а родителя родителя.
-судя по графу второй родитель комита `b8d720` является комит из смерженой ветки `9ea88f22fc6269854151c571162c5bcf958bee2b`
-
-6. Перечислите хеши и комментарии всех коммитов которые были сделаны между тегами  v0.12.23 и v0.12.24.
-
-```* 33ff1c03b 2020-03-19 | v0.12.24 (HEAD, tag: v0.12.24) [tf-release-bot]
-* b14b74c49 2020-03-10 | [Website] vmc provider links [Chris Griggs]
-* 3f235065b 2020-03-19 | Update CHANGELOG.md [Alisdair McDiarmid]
-* 6ae64e247 2020-03-19 | registry: Fix panic when server is unreachable [Alisdair McDiarmid]
-* 5c619ca1b 2020-03-18 | website: Remove links to the getting started guide's old location [Nick Fagerlund]
-* 06275647e 2020-03-18 | Update CHANGELOG.md [Alisdair McDiarmid]
-* d5f9411f5 2020-03-17 | command: Fix bug when using terraform login on Windows [Alisdair McDiarmid]
-* 4b6d06cc5 2020-03-10 | Update CHANGELOG.md [Pam Selle]
-* dd01a3507 2020-03-05 | Update CHANGELOG.md [Kristin Laemmert]
-* 225466bc3 2020-03-05 | Cleanup after v0.12.23 release [tf-release-bot]
-* 85024d310 2020-03-05 | v0.12.23 (tag: v0.12.23) [tf-release-bot]
+```
+По умолчанию вывод /metrics
+curl http://localhost:9100/metrics
+node_pressure_memory_stalled_seconds_total 0
+# HELP node_pressure_memory_waiting_seconds_total Total time in seconds that processes have waited for memory
+# TYPE node_pressure_memory_waiting_seconds_total counter
+node_pressure_memory_waiting_seconds_total 0
+# HELP node_procs_blocked Number of processes blocked waiting for I/O to complete.
+# TYPE node_procs_blocked gauge
+node_procs_blocked 0
+# HELP node_procs_running Number of processes in runnable state.
+# TYPE node_procs_running gauge
+node_procs_running 3
+# HELP node_schedstat_running_seconds_total Number of seconds CPU spent running a process.
+# TYPE node_schedstat_running_seconds_total counter
+для базового мониторинга хоста по CPU, памяти, диску и сети можно выбрать опции
+collector.cpu,  collector.meminfo, сollector.diskstats, collector.netstat.
 ```
 
 
-7. Найдите коммит в котором была создана функция `func providerSource`, ее определение в коде выглядит так `func providerSource(...)` (вместо троеточего перечислены аргументы).
+**Установите в свою виртуальную машину Netdata. Воспользуйтесь готовыми пакетами для установки (sudo apt install -y netdata). После успешной установки:
+в конфигурационном файле /etc/netdata/netdata.conf в секции [web] замените значение с localhost на bind to = 0.0.0.0,
+добавьте в Vagrantfile проброс порта Netdata на свой локальный компьютер и сделайте vagrant reload:
+config.vm.network "forwarded_port", guest: 19999, host: 19999
+После успешной перезагрузки в браузере на своем ПК (не в виртуальной машине) вы должны суметь зайти на localhost:19999. Ознакомьтесь с метриками, которые по умолчанию собираются Netdata и с комментариями, которые даны к этим метрикам.
 
-Перепробовал множество способов поиска функций и изменений, но итог по сути один и он не находит конкретно необходимую функцию 
+Отражаются следующие метрики:
+cpu
+load
+disk
+ram
+swap
+network
+processes
+idlejitter
+interrupts
+softirqs
+softnet
+entropy
+uptime
+ipc semaphores
+ipc shared memory
 
-```$ git grep -e func --and -e providerSource
-command/init_test.go:func TestInit_providerSource(t *testing.T) {
-```
-или вот пытался найти комит в котором была создана функция через `blame`, но такой директории и файла нет....
-```$ git grep -n providerSource
-command/init_test.go:950:func TestInit_providerSource(t *testing.T) {
-plugin/discovery/get.go:156:    providerSource := allVersions.ID
-plugin/discovery/get.go:207:    downloadURLs, err := i.listProviderDownloadURLs(providerSource, versionMeta.Version)
-plugin/discovery/get.go:235:    printedProviderName := fmt.Sprintf("%q (%s)", provider.LegacyString(), providerSource)
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform (main)
-$ git blame -L 156,235 get.go
-fatal: no such path 'get.go' in HEAD
+**Можно ли по выводу dmesg понять, осознает ли ОС, что загружена не на настоящем оборудовании, а на системе виртуализации?**
 
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform (main)
-$ cd plugin/discovery
-bash: cd: plugin/discovery: No such file or directory
-
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform (main)
-$ ls -l
-total 260
--rw-r--r-- 1 Solid 197121  15020 Aug  8 00:51 BUGPROCESS.md
--rw-r--r-- 1 Solid 197121   1669 Aug  8 00:51 CHANGELOG.md
--rw-r--r-- 1 Solid 197121   1631 Aug  8 00:51 CODEOWNERS
--rw-r--r-- 1 Solid 197121    828 Aug  8 00:51 Dockerfile
--rw-r--r-- 1 Solid 197121  16331 Aug  7 19:04 LICENSE
--rw-r--r-- 1 Solid 197121   1898 Aug  8 00:51 Makefile
--rw-r--r-- 1 Solid 197121   3771 Aug  8 00:51 README.md
--rw-r--r-- 1 Solid 197121   2140 Aug  8 00:51 checkpoint.go
--rw-r--r-- 1 Solid 197121    620 Aug  8 00:51 codecov.yml
--rw-r--r-- 1 Solid 197121  10908 Aug  8 00:51 commands.go
-drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 docs/
--rw-r--r-- 1 Solid 197121   6005 Aug  8 00:51 go.mod
--rw-r--r-- 1 Solid 197121 109310 Aug  8 00:51 go.sum
--rw-r--r-- 1 Solid 197121   2654 Aug  8 00:51 help.go
-drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 internal/
--rw-r--r-- 1 Solid 197121  18537 Aug  8 00:51 main.go
--rw-r--r-- 1 Solid 197121   6742 Aug  8 00:51 main_test.go
--rw-r--r-- 1 Solid 197121    985 Aug  8 00:51 plugins.go
--rw-r--r-- 1 Solid 197121  10034 Aug  8 00:51 provider_source.go
-drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 scripts/
--rw-r--r-- 1 Solid 197121    170 Aug  7 19:04 signal_unix.go
--rw-r--r-- 1 Solid 197121    138 Aug  7 19:04 signal_windows.go
-drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 tools/
-drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 version/
--rw-r--r-- 1 Solid 197121    151 Aug  8 00:51 version.go
-drwxr-xr-x 1 Solid 197121      0 Aug  8 00:51 website/
-```
+Можно, достаточно посмотреть:
+vagrant@vagrant:$ dmesg | grep -i virtual
+[ 0.000000] DMI: innotek GmbH VirtualBox/VirtualBox, BIOS VirtualBox 12/01/2006
+[ 0.002846] CPU MTRRs all blank - virtualized system.
+[ 0.118588] Booting paravirtualized kernel on KVM
+[ 3.768753] systemd[1]: Detected virtualization oracle.
 
 
+**Как настроен sysctl fs.nr_open на системе по-умолчанию? Узнайте, что означает этот параметр. Какой другой существующий лимит не позволит достичь такого числа (ulimit --help)?**
+vagrant@vagrant:$ sysctl fs.nr_open
+fs.nr_open = 1048576
+Это максимальный лимит открытых файловых дескрипторов.
+Его не позволит достичь значение, указанное в ulimit:
+-n the maximum number of open file descriptors
+vagrant@vagrant:$ ulimit -n
+1024
 
-1. Найдите все коммиты в которых была изменена функция `globalPluginDirs`.
-```$ git log -S "globalPluginDirs" --oneline
-35a058fb3 main: configure credentials from the CLI config file
-c0b176109 prevent log output during init
-8364383c3 Push plugin discovery down into command package
-```
 
-1. Кто автор функции `synchronizedWriters`? 
-```$ git grep -n synchronizedWriters
-main.go:284:            wrapped := synchronizedWriters(stdout, stderr)
-synchronized_writers.go:13:// synchronizedWriters takes a set of writers and returns wrappers that ensure
-synchronized_writers.go:15:func synchronizedWriters(targets ...io.Writer) []io.Writer {
+**Запустите любой долгоживущий процесс (не ls, который отработает мгновенно, а, например, sleep 1h) в отдельном неймспейсе процессов; покажите, что ваш процесс работает под PID 1 через nsenter. Для простоты работайте в данном задании под root (sudo -i). Под обычным пользователем требуются дополнительные опции (--map-root-user) и т.д.**
 
-Solid@DESKTOP-ARVFF6C MINGW64 ~/github/terraform ((v0.12.24))
-$ git blame -L 15,17 synchronized_writers.go
-5ac311e2a9 (Martin Atkins 2017-05-03 16:25:41 -0700 15) func synchronizedWriters(targets ...io.Writer) []io.Writer {
-```
-Martin Atkins
+
+Запускаем процесс top
+unshare -f --pid --mount-proc top
+Из другого терминала пробуем посмотреть:
+root@vagrant:# lsns
+vagrant@vagrant:$ sudo -i
+root@vagrant:# nsenter -t $(pidof top) -m -p ps ax
+PID TTY STAT TIME COMMAND
+1 pts/0 S+ 0:00 top
+2 pts/1 R+ 0:00 ps ax
+
+**Найдите информацию о том, что такое :(){ :|:& };:. Запустите эту команду в своей виртуальной машине Vagrant с Ubuntu 20.04 (это важно, поведение в других ОС не проверялось). Некоторое время все будет "плохо", после чего (минуты) – ОС должна стабилизироваться. Вызов dmesg расскажет, какой механизм помог автоматической стабилизации. Как настроен этот механизм по-умолчанию, и как изменить число процессов, которое можно создать в сессии?**
+
+:(){ :|:& };: - Это пример так называемой fork-бомбы. Она порождает большое количество собственных копий и тем самым пытается заполнить свободное место в списке активных процессов операционной системы. После заполнения списка процессов становится невозможным старт полезной программы. Даже если какой-либо другой процесс прекратит работу и место в списке процессов освободится, то старт полезной программы маловероятен, так как множество других копий fork-бомбы уже ждут возможности запустить свою очередную копию.
+Кроме заполнения списка процессов, возможны также стратегии заполнения виртуальной памяти, процессорного времени, сокетов и других системных ресурсов. Результатом исчерпания этих ресурсов становится замедление работы или практически остановка операционной системы и/или полезных программ (зависание компьютера).
+: () {
+: |: &
+};:
+:() - Определяет функцию под названием :. Эта функция не принимает аргументов.
+:|: - Затем вызывает себя, используя метод, называемый рекурсией, и направит вывод на другой вызов функции ‘:’. Хуже всего то, что функция вызывается дважды, чтобы "взорвать" систему.
+& - переводит вызов функции в фоновый режим, чтобы дочерний процесс вообще не мог умереть и начал есть системные ресурсы.
+; - Завершит определение функции.
+: - Вызывает (запускает) функцию снова.
+Вот к чему это привело:
+-bash: fork: retry: Resource temporarily unavailable
+-bash: fork: Resource temporarily unavailable
+-bash: fork: Resource temporarily unavailable
+Чтобы изменить число процессов, которое можно создать в сессии до 5000 процессов, используем следующую команду
+ulimit -S -u 5000
+max user processes (-u) 5000
+[ 398.502697] cgroup: fork rejected by pids controller in /user.slice/user-1000.slice/session-4.scope
