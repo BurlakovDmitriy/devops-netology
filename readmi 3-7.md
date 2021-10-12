@@ -1,164 +1,106 @@
-# Домашнее задание к занятию "3.5. Файловые системы"
+# Домашнее задание к занятию "3.7. Компьютерные сети, лекция 2"
 
-1. Узнайте о [sparse](https://ru.wikipedia.org/wiki/%D0%A0%D0%B0%D0%B7%D1%80%D0%B5%D0%B6%D1%91%D0%BD%D0%BD%D1%8B%D0%B9_%D1%84%D0%B0%D0%B9%D0%BB) (разряженных) файлах.
-    Ознакомился со статьей
-    
-1. Могут ли файлы, являющиеся жесткой ссылкой на один объект, иметь разные права доступа и владельца? Почему
-    - Жесткая ссылка и файл, для которой она создавалась имеют одинаковые inode. Поэтому жесткая ссылка имеет те же права доступа, владельца и время последней модификации, что и целевой файл. Различаются только имена файлов. Фактически жесткая ссылка это еще одно имя для файла.
-
-1. Сделайте `vagrant destroy` на имеющийся инстанс Ubuntu. Замените содержимое Vagrantfile следующим:
-
-    ```bash
-    Vagrant.configure("2") do |config|
-      config.vm.box = "bento/ubuntu-20.04"
-      config.vm.provider :virtualbox do |vb|
-        lvm_experiments_disk0_path = "/tmp/lvm_experiments_disk0.vmdk"
-        lvm_experiments_disk1_path = "/tmp/lvm_experiments_disk1.vmdk"
-        vb.customize ['createmedium', '--filename', lvm_experiments_disk0_path, '--size', 2560]
-        vb.customize ['createmedium', '--filename', lvm_experiments_disk1_path, '--size', 2560]
-        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lvm_experiments_disk0_path]
-        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, '--type', 'hdd', '--medium', lvm_experiments_disk1_path]
-      end
-    end
-    ```
-
-    Данная конфигурация создаст новую виртуальную машину с двумя дополнительными неразмеченными дисками по 2.5 Гб. 
-   - Создал
-1. Используя `fdisk`, разбейте первый диск на 2 раздела: 2 Гб, оставшееся пространство.
- ```bash
- - создаем первый раздел на 2 ГБ
-sudo fdisk /dev/sdb
-
-Select (default p): p
-Partition number (1-4, default 1): 1
-First sector (2048-5242879, default 2048): 2048
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-5242879, default 5242879): 2000M
-Value out of range.
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-5242879, default 5242879): +2000M
-
-Created a new partition 1 of type 'Linux' and of size 2 GiB.
-
- - и следом второй на оставшиеся 500
- Partition number (2-4, default 2): 2
-First sector (4098048-5242879, default 4098048): 4098048
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (4098048-5242879, default 5242879): +500M
-
-Created a new partition 2 of type 'Linux' and of size 500 MiB.
-
-sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-└─sdb2                 8:18   0  500M  0 part
-sdc                    8:32   0  2.5G  0 disk
+1. Проверьте список доступных сетевых интерфейсов на вашем компьютере. Какие команды есть для этого в Linux и в Windows?
 ```
-5. Используя `sfdisk`, перенесите данную таблицу разделов на второй диск.
-```buildoutcfg
-sudo sfdisk -d /dev/sdb > part_table_sdb
-sudo sfdisk /dev/sdc < part_table_sdb
-/dev/sdc1: Created a new partition 1 of type 'Linux' and of size 2 GiB.
-/dev/sdc2: Created a new partition 2 of type 'Linux' and of size 500 MiB.
-/dev/sdc3: Done.
-lsblk
-sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-└─sdb2                 8:18   0  500M  0 part
-sdc                    8:32   0  2.5G  0 disk
-├─sdc1                 8:33   0    2G  0 part
-└─sdc2                 8:34   0  500M  0 part
+ Для Linux - команда «ifconfig» используется для отображения информации о текущей конфигурации сети, настройки IP-адреса
+ Для Windows -  ipconfig /all
 ```
-6. Соберите `mdadm` RAID1 на паре разделов 2 Гб.
-```buildoutcfg
-sudo mdadm --create --verbose /dev/md0 -l 1 -n 2 /dev/sd{b1,c1}
-sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-└─sdb2                 8:18   0  500M  0 part
-sdc                    8:32   0  2.5G  0 disk
-├─sdc1                 8:33   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-└─sdc2                 8:34   0  500M  0 part
-```
-
-7. Соберите `mdadm` RAID0 на второй паре маленьких разделов.
-```buildoutcfg
-sudo mdadm --create --verbose /dev/md1 -l 0 -n 2 /dev/sd{b2,c2}
-```
-
-8. Создайте 2 независимых PV на получившихся md-устройствах.
-```buildoutcfg
-sudo pvcreate /dev/md0
-sudo pvcreate /dev/md1
-```
-9. Создайте общую volume-group на этих двух PV.
-```buildoutcfg
-sudo vgcreate vg-01 /dev/md0 /dev/md1
-```
-10. Создайте LV размером 100 Мб, указав его расположение на PV с RAID0.
-
-```buildoutcfg
-sudo lvcreate -n vol_100 -L 100M /dev/vg-01 /dev/md0
-```
-11. Создайте `mkfs.ext4` ФС на получившемся LV.
-```
-sudo mkfs.ext4 /dev/vg-01/vol_100
-```
-12. Смонтируйте этот раздел в любую директорию, например, `/tmp/new`. 
-    ```bash
-         sudo mount /dev/vg-01/vol_100 /tmp/new
-    ```
-1. Поместите туда тестовый файл, например `wget https://mirror.yandex.ru/ubuntu/ls-lR.gz -O /tmp/new/test.gz`.
-    ```commandline
-   Поместил
-    ```
-1. Прикрепите вывод `lsblk`.
+2. Какой протокол используется для распознавания соседа по сетевому интерфейсу? Какой пакет и команды есть в Linux для этого?
 ```commandline
-   sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-│   └─vg--01-vol_100 253:2    0  100M  0 lvm   /tmp/new
-└─sdb2                 8:18   0  500M  0 part
-  └─md1                9:1    0  996M  0 raid0
-sdc                    8:32   0  2.5G  0 disk
-├─sdc1                 8:33   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-│   └─vg--01-vol_100 253:2    0  100M  0 lvm   /tmp/new
-└─sdc2                 8:34   0  500M  0 part
-  └─md1                9:1    0  996M  0 raid0
+LLDP – протокол для обмена информацией между соседними устройствами, позволяет определить к какому порту коммутатора подключен сервер. 
+```
+```
+ apt install 
+ lldpdsystemctl enable lldpd && systemctl start lldpd
+```
+```
+Хотя Wiki на подобный вопрос показвает другой протокол " протокол из набора протоколов TCP/IP, используемый совместно с IPv6. Он работает на сетевом уровне Модели Интернета (RFC 1122) и ответственен за автонастройку адреса конечных и промежуточных точек сети, обнаружения других узлов на линии, определения адреса других узлов канального уровня, обнаружение конфликта адресов, поиск доступных маршрутизаторов и DNS-серверов, определения префикса адреса и поддержки доступности информации о путях к другим активным соседним узлам "
+```
+3. Какая технология используется для разделения L2 коммутатора на несколько виртуальных сетей? Какой пакет и команды есть в Linux для этого? Приведите пример конфига.
+```commandline
+VLAN – виртуальное разделение коммутатора L2
+apt install vlan
+Настройки подынтерфейсов[1] VLANов в Ubuntu точно так же, как и для сетевых интерфейсов, указываются в файле /etc/network/interfaces.
+auto vlan1400
+iface vlan1400 inet static
+or 
+iface eth0.1400 inet static
+настройка VLAN выполняется с помощью программы vconfig
+
+```
+4. Какие типы агрегации интерфейсов есть в Linux? Какие опции есть для балансировки нагрузки? Приведите пример конфига.
+```commandline
+Bonding – это объединение сетевых интерфейсов по определенному типу агрегации, Служит для увеличения пропускной способности и/или отказоустойчивость сети.
+mode=0 (balance-rr)
+mode=1 (active-backup)
+mode=2 (balance-xor)
+и другие 
+
+Для корректной работы объединения интерфейсов необходимо установить пакет ifenslave-2.6 и проверить наличие модуля bond
+
+# cat /etc/network/interfaces
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto bond0 eth0 eth1
+# настроим параметры бонд-интерфейса
+iface bond0 inet static
+# адрес, маска, шлюз. (можно еще что-нибудь по вкусу)
+        address 10.0.0.11
+        netmask 255.255.255.0
+        gateway 10.0.0.254
+        # определяем подчиненные (объединяемые) интерфейсы
+        bond-slaves eth0 eth1
+        # задаем тип бондинга
+        bond-mode balance-alb
+        # интервал проверки линии в миллисекундах
+bond-miimon 100
+        # Задержка перед установкой соединения в миллисекундах
+bond-downdelay 200
+# Задержка перед обрывом соединения в миллисекундах
+        bond-updelay 20
+
+```
+5. Сколько IP адресов в сети с маской /29 ? Сколько /29 подсетей можно получить из сети с маской /24. Приведите несколько примеров /29 подсетей внутри сети 10.10.10.0/24.
+```commandline
+/29 - 6 узловых (+2 крайних)
+Из /29 можно получить 32 сети с маской /24
+
+
+Сеть       :    	10.10.10.48/29       	00001010.00001010.00001010.00110 000
+Хост(min):	10.10.10.49	00001010.00001010.00001010.00110 001
+Хост(max):	10.10.10.54	00001010.00001010.00001010.00110 110
+Broadcast:	10.10.10.55	00001010.00001010.00001010.00110 111
+Хостов в сети:	6	класс A, Интранет
+
+Сеть       :    	10.10.10.56/29       	00001010.00001010.00001010.00111 000
+Хост(min):	10.10.10.57	00001010.00001010.00001010.00111 001
+Хост(max):	10.10.10.62	00001010.00001010.00001010.00111 110
+Broadcast:	10.10.10.63	00001010.00001010.00001010.00111 111
+Хостов в сети:	6	класс A, Интранет
+
+Сеть       :    	10.10.10.64/29       	00001010.00001010.00001010.01000 000
+Хост(min):	10.10.10.65	00001010.00001010.00001010.01000 001
+Хост(max):	10.10.10.70	00001010.00001010.00001010.01000 110
+Broadcast:	10.10.10.71	00001010.00001010.00001010.01000 111
+Хостов в сети:	6	класс A, Интранет
+
+Сеть       :    	10.10.10.72/29       	00001010.00001010.00001010.01001 000
+Хост(min):	10.10.10.73	00001010.00001010.00001010.01001 001
+Хост(max):	10.10.10.78	00001010.00001010.00001010.01001 110
+Broadcast:	10.10.10.79	00001010.00001010.00001010.01001 111
+Хостов в сети:	6	класс A, Интранет
+
+
+
 ```
 
-15. Протестируйте целостность файла:
+6. Задача: вас попросили организовать стык между 2-мя организациями. Диапазоны 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 уже заняты. Из какой подсети допустимо взять частные IP адреса? Маску выберите из расчета максимум 40-50 хостов внутри подсети.
+```
+Делаем trunk соединение 
 
-    ```bash
-    root@vagrant:~# gzip -t /tmp/new/test.gz
-    root@vagrant:~# echo $?
-    0
-    ```
-    ```commandline
-    vagrant@vagrant:~$ gzip -t /tmp/new/test.gz
-    vagrant@vagrant:~$ echo $?
-    0
+```
 
-    ```
-
-1. Используя pvmove, переместите содержимое PV с RAID0 на RAID1.
-    - sudo pvmove /dev/md0 /dev/md1
-1. Сделайте `--fail` на устройство в вашем RAID1 md.
-    ```commandline
-   sudo mdadm /dev/md0 --fail /dev/sdc1
-    ```
-
-1. Подтвердите выводом `dmesg`, что RAID1 работает в деградированном состоянии.
-    ```commandline
-    [ 9642.343745] md/raid1:md0: Disk failure on sdc1, disabling device.
-               md/raid1:md0: Operation continuing on 1 devices.
-    ```
-1. Протестируйте целостность файла, несмотря на "сбойный" диск он должен продолжать быть доступен:
-
-    ```bash
-    root@vagrant:~# gzip -t /tmp/new/test.gz
-    root@vagrant:~# echo $?
-    0
-    ```
-    ```commandline
-        Всё верно
-    ``` 
-1. Погасите тестовый хост, `vagrant destroy`.
+7. Как проверить ARP таблицу в Linux, Windows? Как очистить ARP кеш полностью? Как из ARP таблицы удалить только один нужный IP?
