@@ -1,164 +1,112 @@
-# Домашнее задание к занятию "3.5. Файловые системы"
+# Домашнее задание к занятию "3.6. Компьютерные сети, лекция 1"
 
-1. Узнайте о [sparse](https://ru.wikipedia.org/wiki/%D0%A0%D0%B0%D0%B7%D1%80%D0%B5%D0%B6%D1%91%D0%BD%D0%BD%D1%8B%D0%B9_%D1%84%D0%B0%D0%B9%D0%BB) (разряженных) файлах.
-    Ознакомился со статьей
-    
-1. Могут ли файлы, являющиеся жесткой ссылкой на один объект, иметь разные права доступа и владельца? Почему
-    - Жесткая ссылка и файл, для которой она создавалась имеют одинаковые inode. Поэтому жесткая ссылка имеет те же права доступа, владельца и время последней модификации, что и целевой файл. Различаются только имена файлов. Фактически жесткая ссылка это еще одно имя для файла.
-
-1. Сделайте `vagrant destroy` на имеющийся инстанс Ubuntu. Замените содержимое Vagrantfile следующим:
-
-    ```bash
-    Vagrant.configure("2") do |config|
-      config.vm.box = "bento/ubuntu-20.04"
-      config.vm.provider :virtualbox do |vb|
-        lvm_experiments_disk0_path = "/tmp/lvm_experiments_disk0.vmdk"
-        lvm_experiments_disk1_path = "/tmp/lvm_experiments_disk1.vmdk"
-        vb.customize ['createmedium', '--filename', lvm_experiments_disk0_path, '--size', 2560]
-        vb.customize ['createmedium', '--filename', lvm_experiments_disk1_path, '--size', 2560]
-        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', lvm_experiments_disk0_path]
-        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, '--type', 'hdd', '--medium', lvm_experiments_disk1_path]
-      end
-    end
-    ```
-
-    Данная конфигурация создаст новую виртуальную машину с двумя дополнительными неразмеченными дисками по 2.5 Гб. 
-   - Создал
-1. Используя `fdisk`, разбейте первый диск на 2 раздела: 2 Гб, оставшееся пространство.
- ```bash
- - создаем первый раздел на 2 ГБ
-sudo fdisk /dev/sdb
-
-Select (default p): p
-Partition number (1-4, default 1): 1
-First sector (2048-5242879, default 2048): 2048
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-5242879, default 5242879): 2000M
-Value out of range.
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-5242879, default 5242879): +2000M
-
-Created a new partition 1 of type 'Linux' and of size 2 GiB.
-
- - и следом второй на оставшиеся 500
- Partition number (2-4, default 2): 2
-First sector (4098048-5242879, default 4098048): 4098048
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (4098048-5242879, default 5242879): +500M
-
-Created a new partition 2 of type 'Linux' and of size 500 MiB.
-
-sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-└─sdb2                 8:18   0  500M  0 part
-sdc                    8:32   0  2.5G  0 disk
+1. Работа c HTTP через телнет.
+- Подключитесь утилитой телнет к сайту stackoverflow.com
+`telnet stackoverflow.com 80`
+- отправьте HTTP запрос
+```bash
+GET /questions HTTP/1.0
+HOST: stackoverflow.com
+[press enter]
+[press enter]
 ```
-5. Используя `sfdisk`, перенесите данную таблицу разделов на второй диск.
-```buildoutcfg
-sudo sfdisk -d /dev/sdb > part_table_sdb
-sudo sfdisk /dev/sdc < part_table_sdb
-/dev/sdc1: Created a new partition 1 of type 'Linux' and of size 2 GiB.
-/dev/sdc2: Created a new partition 2 of type 'Linux' and of size 500 MiB.
-/dev/sdc3: Done.
-lsblk
-sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-└─sdb2                 8:18   0  500M  0 part
-sdc                    8:32   0  2.5G  0 disk
-├─sdc1                 8:33   0    2G  0 part
-└─sdc2                 8:34   0  500M  0 part
-```
-6. Соберите `mdadm` RAID1 на паре разделов 2 Гб.
-```buildoutcfg
-sudo mdadm --create --verbose /dev/md0 -l 1 -n 2 /dev/sd{b1,c1}
-sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-└─sdb2                 8:18   0  500M  0 part
-sdc                    8:32   0  2.5G  0 disk
-├─sdc1                 8:33   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-└─sdc2                 8:34   0  500M  0 part
-```
-
-7. Соберите `mdadm` RAID0 на второй паре маленьких разделов.
-```buildoutcfg
-sudo mdadm --create --verbose /dev/md1 -l 0 -n 2 /dev/sd{b2,c2}
-```
-
-8. Создайте 2 независимых PV на получившихся md-устройствах.
-```buildoutcfg
-sudo pvcreate /dev/md0
-sudo pvcreate /dev/md1
-```
-9. Создайте общую volume-group на этих двух PV.
-```buildoutcfg
-sudo vgcreate vg-01 /dev/md0 /dev/md1
-```
-10. Создайте LV размером 100 Мб, указав его расположение на PV с RAID0.
-
-```buildoutcfg
-sudo lvcreate -n vol_100 -L 100M /dev/vg-01 /dev/md0
-```
-11. Создайте `mkfs.ext4` ФС на получившемся LV.
-```
-sudo mkfs.ext4 /dev/vg-01/vol_100
-```
-12. Смонтируйте этот раздел в любую директорию, например, `/tmp/new`. 
-    ```bash
-         sudo mount /dev/vg-01/vol_100 /tmp/new
-    ```
-1. Поместите туда тестовый файл, например `wget https://mirror.yandex.ru/ubuntu/ls-lR.gz -O /tmp/new/test.gz`.
-    ```commandline
-   Поместил
-    ```
-1. Прикрепите вывод `lsblk`.
+- В ответе укажите полученный HTTP код, что он означает?
 ```commandline
-   sdb                    8:16   0  2.5G  0 disk
-├─sdb1                 8:17   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-│   └─vg--01-vol_100 253:2    0  100M  0 lvm   /tmp/new
-└─sdb2                 8:18   0  500M  0 part
-  └─md1                9:1    0  996M  0 raid0
-sdc                    8:32   0  2.5G  0 disk
-├─sdc1                 8:33   0    2G  0 part
-│ └─md0                9:0    0    2G  0 raid1
-│   └─vg--01-vol_100 253:2    0  100M  0 lvm   /tmp/new
-└─sdc2                 8:34   0  500M  0 part
-  └─md1                9:1    0  996M  0 raid0
+GET /questions HTTP/1.0
+HOST: stackoverflow.com
+
+HTTP/1.1 301 Moved Permanently
+cache-control: no-cache, no-store, must-revalidate
+location: https://stackoverflow.com/questions
+x-request-guid: 28681d87-3762-4669-b70a-1612be58b423
+feature-policy: microphone 'none'; speaker 'none'
+content-security-policy: upgrade-insecure-requests; frame-ancestors 'self' https://stackexchange.com
+Accept-Ranges: bytes
+Date: Sun, 17 Oct 2021 20:28:43 GMT
+Via: 1.1 varnish
+Connection: close
+X-Served-By: cache-fra19138-FRA
+X-Cache: MISS
+X-Cache-Hits: 0
+X-Timer: S1634502524.814156,VS0,VE93
+Vary: Fastly-SSL
+X-DNS-Prefetch-Control: off
+Set-Cookie: prov=fa9ec3f6-a6f7-b2a3-c577-67942674a00c; domain=.stackoverflow.com; expires=Fri, 01-Jan-2055 00:00:00 GMT; path=/; HttpOnly
+
+Connection closed by foreign host.
+
+
+Код состояния HTTP 301 или Moved Permanently (с англ. — «Перемещено навсегда») — стандартный код ответа HTTP, получаемый в ответ от сервера в ситуации, когда запрошенный ресурс был на постоянной основе перемещён в новое месторасположение, и указывающий на то, что текущие ссылки, использующие данный URL, должны быть обновлены
+```
+2. Повторите задание 1 в браузере, используя консоль разработчика F12.
+- откройте вкладку `Network`
+- отправьте запрос http://stackoverflow.com
+- найдите первый ответ HTTP сервера, откройте вкладку `Headers`
+- укажите в ответе полученный HTTP код.
+  ```commandline
+        Request URL: https://stackoverflow.com/
+        Request Method: GET
+        Status Code: 200 
+    ```
+
+- проверьте время загрузки страницы, какой запрос обрабатывался дольше всего?
+- приложите скриншот консоли браузера в ответ.
+
+
+3. Какой IP адрес у вас в интернете?
+   31.172.133.6
+4. Какому провайдеру принадлежит ваш IP адрес? Какой автономной системе AS? Воспользуйтесь утилитой `whois`
+```commandline
+ whois 31.172.133.6
+% This is the RIPE Database query service.
+% The objects are in RPSL format.
+%
+% The RIPE Database is subject to Terms and Conditions.
+% See http://www.ripe.net/db/support/db-terms-conditions.pdf
+
+% Note: this output has been filtered.
+%       To receive output for a database update, use the "-B" flag.
+
+% Information related to '31.172.133.0 - 31.172.133.255'
+
+% Abuse contact for '31.172.133.0 - 31.172.133.255' is 'admins@kmvtelecom.ru'
+
+inetnum:        31.172.133.0 - 31.172.133.255
+netname:        KMVtelecom-IP
+country:        RU
+admin-c:        JPNC-RIPE
+tech-c:         JPNC-RIPE
+status:         ASSIGNED PA
+mnt-by:         POTOK-NCC
+created:        2019-03-19T10:50:36Z
+last-modified:  2019-03-19T10:50:36Z
+source:         RIPE
+
+role:           KMVtelecom NOC
+address:        11/1 Ordzhonikidze st., Pyatigorsk, Russia
+abuse-mailbox:  admins@kmvtelecom.ru
+admin-c:        SL321-RIPE
+tech-c:         NGAZ-RIPE
+mnt-by:         POTOK-NCC
+nic-hdl:        JPNC-RIPE
+created:        2009-08-27T08:33:57Z
+last-modified:  2015-11-04T14:49:30Z
+source:         RIPE # Filtered
+
+% Information related to '31.172.133.0/24AS44963'
+
+route:          31.172.133.0/24
+descr:          KMVtelecom_Stavropol_IP
+origin:         AS44963
+mnt-by:         POTOK-NCC
+created:        2012-02-27T06:34:49Z
+last-modified:  2019-08-21T06:00:39Z
+source:         RIPE
+
+% This query was served by the RIPE Database Query Service version 1.101 (WAGYU)
 ```
 
-15. Протестируйте целостность файла:
-
-    ```bash
-    root@vagrant:~# gzip -t /tmp/new/test.gz
-    root@vagrant:~# echo $?
-    0
-    ```
-    ```commandline
-    vagrant@vagrant:~$ gzip -t /tmp/new/test.gz
-    vagrant@vagrant:~$ echo $?
-    0
-
-    ```
-
-1. Используя pvmove, переместите содержимое PV с RAID0 на RAID1.
-    - sudo pvmove /dev/md0 /dev/md1
-1. Сделайте `--fail` на устройство в вашем RAID1 md.
-    ```commandline
-   sudo mdadm /dev/md0 --fail /dev/sdc1
-    ```
-
-1. Подтвердите выводом `dmesg`, что RAID1 работает в деградированном состоянии.
-    ```commandline
-    [ 9642.343745] md/raid1:md0: Disk failure on sdc1, disabling device.
-               md/raid1:md0: Operation continuing on 1 devices.
-    ```
-1. Протестируйте целостность файла, несмотря на "сбойный" диск он должен продолжать быть доступен:
-
-    ```bash
-    root@vagrant:~# gzip -t /tmp/new/test.gz
-    root@vagrant:~# echo $?
-    0
-    ```
-    ```commandline
-        Всё верно
-    ``` 
-1. Погасите тестовый хост, `vagrant destroy`.
+5. Через какие сети проходит пакет, отправленный с вашего компьютера на адрес 8.8.8.8? Через какие AS? Воспользуйтесь утилитой `traceroute`
+6. Повторите задание 5 в утилите `mtr`. На каком участке наибольшая задержка - delay?
+7. Какие DNS сервера отвечают за доменное имя dns.google? Какие A записи? воспользуйтесь утилитой `dig`
+8. Проверьте PTR записи для IP адресов из задания 7. Какое доменное имя привязано к IP? воспользуйтесь утилитой `dig`
